@@ -31,8 +31,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-// Use body-parser for application/json and set the custom raw body buffer
-app.use(bodyParser.json({ verify: rawBodyBuffer }));
+app.use(bodyParser.json());
 app.use("/api-docs", swaggerMiddleware, swaggerSetup);
 
 //Routes
