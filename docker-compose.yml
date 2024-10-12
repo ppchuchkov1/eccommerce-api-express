@@ -12,7 +12,7 @@ services:
       STRIPE_WEBHOOK_SECRET: whsec_8179dfc3993168f5cafdf007bb98ea34abb33ad235af6fdd249c21e86c656684
       GMAIL_USER: ppchuchkov1@gmail.com
       BREVO_APP_PASSWORD: jO7PU0ZC6SvkEsc4
-    command: ["node", "src/index.js"] # Използвайте node вместо nodemon
+    command: ["node", "src/app.js"] # Използвайте node вместо nodemon
 
   mongo:
     image: mongo:7.0
