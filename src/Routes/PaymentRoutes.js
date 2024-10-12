@@ -1,5 +1,5 @@
 const express = require("express");
-const bodyParser = require("body-parser"); // Добавен импорт на body-parser
+const bodyParser = require("body-parser"); // Импорт на body-parser
 const { stripePayment, webhook } = require("../Controllers/PaymentController");
 
 const router = express.Router();
@@ -15,6 +15,10 @@ const rawBodyBuffer = (req, res, buf, encoding) => {
 // Маршрут за създаване на сесия за плащане
 router.post("/create-checkout-session", stripePayment);
 // Маршрут за webhook
-router.post("/webhook", bodyParser.json({ verify: rawBodyBuffer }), webhook);
+router.post(
+  "/webhook",
+  bodyParser.raw({ type: "*/*", verify: rawBodyBuffer }),
+  webhook
+); // Използвайте raw вместо json
 
 module.exports = router;
