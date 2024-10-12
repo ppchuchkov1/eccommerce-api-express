@@ -1,4 +1,4 @@
-const fs = require("fs");
+const fs = require("fs").promises;
 const path = require("path");
 const Stripe = require("stripe");
 const nodemailer = require("nodemailer");
@@ -17,6 +17,10 @@ const transporter = nodemailer.createTransport({
 // Stripe payment endpoint
 const stripePayment = async (req, res) => {
   const { line_items, customerEmail } = req.body;
+
+  if (!line_items || !Array.isArray(line_items) || line_items.length === 0) {
+    return res.status(400).json({ error: "Invalid line items" });
+  }
 
   try {
     const session = await stripe.checkout.sessions.create({
@@ -61,11 +65,8 @@ const webhook = async (req, res) => {
       "../payment-email-template.html"
     );
 
-    fs.readFile(htmlTemplatePath, "utf-8", (err, htmlContent) => {
-      if (err) {
-        console.error("Error reading HTML file:", err);
-        return res.status(500).json({ error: "Internal Server Error" });
-      }
+    try {
+      const htmlContent = await fs.readFile(htmlTemplatePath, "utf-8");
 
       // Send confirmation email
       const mailOptions = {
@@ -76,14 +77,12 @@ const webhook = async (req, res) => {
         html: htmlContent,
       };
 
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.error("Error sending email:", error);
-        } else {
-          console.log("Email sent: " + info.response);
-        }
-      });
-    });
+      await transporter.sendMail(mailOptions);
+      console.log("Email sent successfully.");
+    } catch (error) {
+      console.error("Error reading HTML file or sending email:", error);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
   }
 
   // Return a response to acknowledge receipt of the event
