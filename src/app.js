@@ -32,12 +32,16 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
-app.use("/api-docs", swaggerMiddleware, swaggerSetup);
+
+// Премести bodyParser.raw() за webhook маршрута преди да регистрираш рутовете
+app.use("/api/payment/webhook", bodyParser.raw({ type: "application/json" }));
 
 //Routes
 app.use("/api/products", productRoutes);
 app.use("/api/payment", paymentRoutes);
-app.use("/api/payment/webhook", bodyParser.raw({ type: "application/json" }));
+
+// Swagger docs
+app.use("/api-docs", swaggerMiddleware, swaggerSetup);
 
 // Start the server
 app.listen(PORT, () => {
