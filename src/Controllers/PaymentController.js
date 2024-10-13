@@ -19,13 +19,19 @@ const stripePayment = async (req, res) => {
   const { line_items, customerEmail } = req.body;
 
   try {
+    // Create a customer in Stripe
+    const customer = await stripe.customers.create({
+      email: customerEmail, // Store the customer email
+    });
+
+    // Create a checkout session with the customer ID
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: line_items,
       mode: "payment",
       success_url: `https://stipe-react.netlify.app/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `https://stipe-react.netlify.app/cancel`,
-      // Store the customer email in the metadata
+      customer: customer.id, // Associate the session with the customer
       metadata: {
         customerEmail, // Store customer email
       },
