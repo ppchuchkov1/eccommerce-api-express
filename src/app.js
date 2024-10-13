@@ -32,12 +32,12 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
-app.use(bodyParser.raw({ type: "application/json" }));
 app.use("/api-docs", swaggerMiddleware, swaggerSetup);
 
 //Routes
 app.use("/api/products", productRoutes);
 app.use("/api/payment", paymentRoutes);
+app.use("/api/payment/webhook", bodyParser.raw({ type: "application/json" }));
 
 // Start the server
 app.listen(PORT, () => {
