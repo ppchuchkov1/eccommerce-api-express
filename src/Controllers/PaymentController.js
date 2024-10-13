@@ -9,12 +9,12 @@ const transporter = nodemailer.createTransport({
   port: 587,
   secure: false,
   auth: {
-    user: "7dc806001@smtp-brevo.com",
-    pass: "jO7PU0ZC6SvkEsc4",
+    user: "7dc806001@smtp-brevo.com", // заменете с вашите креденшъли
+    pass: process.env.BREVO_APP_PASSWORD, // използва се от .env файла
   },
 });
 
-// Stripe payment endpoint to create checkout session
+// Stripe payment endpoint
 const stripePayment = async (req, res) => {
   const { line_items, customerEmail } = req.body;
 
@@ -25,7 +25,6 @@ const stripePayment = async (req, res) => {
       mode: "payment",
       success_url: `https://stipe-react.netlify.app/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `https://stipe-react.netlify.app/cancel`,
-      customer_email: customerEmail, // Attach the customer email to the session
     });
 
     res.status(200).json({ id: session.id });
@@ -35,57 +34,59 @@ const stripePayment = async (req, res) => {
   }
 };
 
-// Webhook endpoint to handle Stripe events
-const stripeWebhook = async (req, res) => {
+// Stripe webhook endpoint
+const stripeWebhook = (req, res) => {
   const sig = req.headers["stripe-signature"];
-  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-  let event;
 
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-  } catch (err) {
-    console.log(`Webhook signature verification failed: ${err.message}`);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-
-  // Handle the checkout.session.completed event
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object;
-
-    // Load email template
-    const htmlTemplatePath = path.join(
-      __dirname,
-      "../payment-email-template.html"
+    const event = stripe.webhooks.constructEvent(
+      req.body, // използва се raw body
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
     );
 
-    fs.readFile(htmlTemplatePath, "utf-8", (err, htmlContent) => {
-      if (err) {
-        console.error("Error reading HTML file:", err);
-        return res.status(500).json({ error: "Internal Server Error" });
-      }
+    // Проверка дали плащането е успешно
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object;
+      console.log(`Payment was successful! Session ID: ${session.id}`);
 
-      // Prepare the email options
-      const mailOptions = {
-        from: process.env.GMAIL_USER,
-        to: session.customer_email, // Using the customer email from the session
-        subject: "Payment Successful",
-        text: `Thank you for your purchase! Your payment was successful. Session ID: ${session.id}`,
-        html: htmlContent,
-      };
+      // Изпращане на потвърдителен имейл
+      const htmlTemplatePath = path.join(
+        __dirname,
+        "../payment-email-template.html"
+      );
 
-      // Send the confirmation email
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.error("Error sending email:", error);
-        } else {
-          console.log("Email sent: " + info.response);
+      fs.readFile(htmlTemplatePath, "utf-8", (err, htmlContent) => {
+        if (err) {
+          console.error("Error reading HTML file:", err);
+          return res.status(500).json({ error: "Internal Server Error" });
         }
-      });
-    });
-  }
 
-  res.json({ received: true });
+        // Подготовка и изпращане на имейл
+        const mailOptions = {
+          from: process.env.GMAIL_USER,
+          to: session.customer_email, // използва се имейл от сесията
+          subject: "Payment Successful",
+          text: `Thank you for your purchase! Your payment was successful. Session ID: ${session.id}`,
+          html: htmlContent,
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            console.error("Error sending email:", error);
+          } else {
+            console.log("Email sent: " + info.response);
+          }
+        });
+      });
+    }
+
+    // Отговор, че събитието е получено успешно
+    res.json({ received: true });
+  } catch (err) {
+    console.error(`Webhook signature verification failed.`, err.message);
+    res.status(400).send(`Webhook Error: ${err.message}`);
+  }
 };
 
 module.exports = {
