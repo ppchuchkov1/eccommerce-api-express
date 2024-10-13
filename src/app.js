@@ -34,11 +34,6 @@ app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
 // Премести bodyParser.raw() за webhook маршрута преди да регистрираш рутовете
-app.post(
-  "/api/payment/webhook",
-  bodyParser.raw({ type: "application/json" }),
-  stripeWebhook // Тук добавяме stripeWebhook
-);
 
 // Регистриране на рутовете
 app.use("/api/products", productRoutes);
