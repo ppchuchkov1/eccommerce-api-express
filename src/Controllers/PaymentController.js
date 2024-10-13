@@ -35,6 +35,8 @@ const stripePayment = async (req, res) => {
 };
 
 const stripeWebhook = (req, res) => {
+  const endpointSecret =
+    "whsec_8179dfc3993168f5cafdf007bb98ea34abb33ad235af6fdd249c21e86c656684";
   const sig = req.headers["stripe-signature"];
 
   let event;
