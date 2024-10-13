@@ -32,6 +32,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
+app.use(bodyParser.raw({ type: "application/json" }));
 app.use("/api-docs", swaggerMiddleware, swaggerSetup);
 
 //Routes

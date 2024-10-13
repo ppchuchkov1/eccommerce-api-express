@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Stripe payment endpoint
+// Stripe payment endpoint to create checkout session
 const stripePayment = async (req, res) => {
   const { line_items, customerEmail } = req.body;
 
@@ -25,9 +25,35 @@ const stripePayment = async (req, res) => {
       mode: "payment",
       success_url: `https://stipe-react.netlify.app/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `https://stipe-react.netlify.app/cancel`,
+      customer_email: customerEmail, // Attach the customer email to the session
     });
 
-    // Изпращане на потвърдителен имейл
+    res.status(200).json({ id: session.id });
+  } catch (error) {
+    console.error("Error creating checkout session:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+// Webhook endpoint to handle Stripe events
+const stripeWebhook = async (req, res) => {
+  const sig = req.headers["stripe-signature"];
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+  } catch (err) {
+    console.log(`Webhook signature verification failed: ${err.message}`);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  // Handle the checkout.session.completed event
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object;
+
+    // Load email template
     const htmlTemplatePath = path.join(
       __dirname,
       "../payment-email-template.html"
@@ -39,32 +65,30 @@ const stripePayment = async (req, res) => {
         return res.status(500).json({ error: "Internal Server Error" });
       }
 
-      // Изпращане на имейл
+      // Prepare the email options
       const mailOptions = {
         from: process.env.GMAIL_USER,
-        to: customerEmail,
+        to: session.customer_email, // Using the customer email from the session
         subject: "Payment Successful",
         text: `Thank you for your purchase! Your payment was successful. Session ID: ${session.id}`,
         html: htmlContent,
       };
 
+      // Send the confirmation email
       transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
           console.error("Error sending email:", error);
-          return res.status(500).json({ error: "Failed to send email." });
         } else {
           console.log("Email sent: " + info.response);
         }
       });
     });
-
-    res.status(200).json({ id: session.id });
-  } catch (error) {
-    console.error("Error creating checkout session:", error);
-    res.status(500).json({ error: "Internal Server Error" });
   }
+
+  res.json({ received: true });
 };
 
 module.exports = {
   stripePayment,
+  stripeWebhook,
 };
