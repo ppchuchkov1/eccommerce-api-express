@@ -27,37 +27,7 @@ const stripePayment = async (req, res) => {
       cancel_url: `https://stipe-react.netlify.app/cancel`,
     });
 
-    res.status(200).json({ id: session.id });
-  } catch (error) {
-    console.error("Error creating checkout session:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-};
-
-// Webhook endpoint
-const webhook = async (req, res) => {
-  const sig = req.headers["stripe-signature"];
-  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-  console.log("Raw Body:", req.rawBody); // Лог на суровото съдържание
-
-  let event;
-
-  try {
-    event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
-  } catch (err) {
-    console.error("Webhook signature verification failed.", err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-
-  // Обработка на събитията
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object;
-
-    // Вземете email на клиента от сесията
-    const customerEmail = session.customer_email;
-
-    // Четене на HTML шаблона
+    // Изпращане на потвърдителен имейл
     const htmlTemplatePath = path.join(
       __dirname,
       "../payment-email-template.html"
@@ -69,7 +39,7 @@ const webhook = async (req, res) => {
         return res.status(500).json({ error: "Internal Server Error" });
       }
 
-      // Изпращане на потвърдителен имейл
+      // Изпращане на имейл
       const mailOptions = {
         from: process.env.GMAIL_USER,
         to: customerEmail,
@@ -81,18 +51,20 @@ const webhook = async (req, res) => {
       transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
           console.error("Error sending email:", error);
+          return res.status(500).json({ error: "Failed to send email." });
         } else {
           console.log("Email sent: " + info.response);
         }
       });
     });
-  }
 
-  // Върнете отговор, за да потвърдите получаването на събитието
-  res.json({ received: true });
+    res.status(200).json({ id: session.id });
+  } catch (error) {
+    console.error("Error creating checkout session:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 };
 
 module.exports = {
   stripePayment,
-  webhook,
 };
