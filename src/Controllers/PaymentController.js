@@ -61,35 +61,35 @@ const stripeWebHook = async (req, res) => {
       const customerEmail = checkoutSessionCompleted.metadata.customerEmail;
       console.log(customerEmail);
 
-      // // Read the HTML email template
-      // const htmlTemplatePath = path.join(
-      //   __dirname,
-      //   "../payment-email-template.html"
-      // );
+      // Read the HTML email template
+      const htmlTemplatePath = path.join(
+        __dirname,
+        "../payment-email-template.html"
+      );
 
-      // fs.readFile(htmlTemplatePath, "utf-8", (err, htmlContent) => {
-      //   if (err) {
-      //     console.error("Error reading HTML file:", err);
-      //     return; // You can log or handle the error here if needed
-      //   }
+      fs.readFile(htmlTemplatePath, "utf-8", (err, htmlContent) => {
+        if (err) {
+          console.error("Error reading HTML file:", err);
+          return; // You can log or handle the error here if needed
+        }
 
-      //   // Send the confirmation email
-      //   const mailOptions = {
-      //     from: process.env.GMAIL_USER,
-      //     to: customerEmail,
-      //     subject: "Payment Successful",
-      //     text: `Thank you for your purchase! Your payment was successful. Session ID: ${checkoutSessionCompleted.id}`,
-      //     html: htmlContent,
-      //   };
+        // Send the confirmation email
+        const mailOptions = {
+          from: process.env.GMAIL_USER,
+          to: customerEmail,
+          subject: "Payment Successful",
+          text: `Thank you for your purchase! Your payment was successful. Session ID: ${checkoutSessionCompleted.id}`,
+          html: htmlContent,
+        };
 
-      //   transporter.sendMail(mailOptions, (error, info) => {
-      //     if (error) {
-      //       console.error("Error sending email:", error);
-      //     } else {
-      //       console.log("Email sent: " + info.response);
-      //     }
-      //   });
-      // });
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            console.error("Error sending email:", error);
+          } else {
+            console.log("Email sent: " + info.response);
+          }
+        });
+      });
       break;
     // ... handle other event types
     default:
