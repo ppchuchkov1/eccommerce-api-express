@@ -6,6 +6,7 @@ const cors = require("cors");
 const { swaggerMiddleware, swaggerSetup } = require("./SwaggerOptions");
 const productRoutes = require("./Routes/ProductsRoutes");
 const paymentRoutes = require("./Routes/PaymentRoutes");
+const stripeWebHookRoutes = require("./Routes/StripeWebHookRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -31,9 +32,11 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(bodyParser.json());
 app.use("/api-docs", swaggerMiddleware, swaggerSetup);
+//Stripe web hook
+app.use("/api/payment", stripeWebHookRoutes);
 
+app.use(bodyParser.json());
 //Routes
 app.use("/api/products", productRoutes);
 app.use("/api/payment", paymentRoutes);
