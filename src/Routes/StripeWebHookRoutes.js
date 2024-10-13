@@ -8,3 +8,5 @@ router.post(
   express.raw({ type: "application/json" }),
   stripeWebHook
 );
+
+module.exports = router;
