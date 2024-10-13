@@ -17,8 +17,7 @@ router.post("/create-checkout-session", stripePayment);
 // Маршрут за webhook
 router.post(
   "/webhook",
-  bodyParser.raw({ type: "*/*", verify: rawBodyBuffer }),
+  bodyParser.raw({ type: "*/*", verify: rawBodyBuffer }), // Тук трябва да се използва raw, за да не бъде обработено тялото от body-parser
   webhook
-); // Използвайте raw вместо json
-
+);
 module.exports = router;

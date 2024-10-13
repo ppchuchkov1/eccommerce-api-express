@@ -35,10 +35,11 @@ const stripePayment = async (req, res) => {
 };
 
 // Webhook endpoint
-// Webhook endpoint
 const webhook = async (req, res) => {
   const sig = req.headers["stripe-signature"];
   const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  console.log("Raw Body:", req.rawBody); // Лог на суровото съдържание
 
   let event;
 
@@ -49,14 +50,14 @@ const webhook = async (req, res) => {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // Handle the event
+  // Обработка на събитията
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
 
-    // Get customer email from the session
-    const customerEmail = session.customer_email; // Use customer_email if set
+    // Вземете email на клиента от сесията
+    const customerEmail = session.customer_email;
 
-    // Read the HTML template
+    // Четене на HTML шаблона
     const htmlTemplatePath = path.join(
       __dirname,
       "../payment-email-template.html"
@@ -68,7 +69,7 @@ const webhook = async (req, res) => {
         return res.status(500).json({ error: "Internal Server Error" });
       }
 
-      // Send confirmation email
+      // Изпращане на потвърдителен имейл
       const mailOptions = {
         from: process.env.GMAIL_USER,
         to: customerEmail,
@@ -87,7 +88,7 @@ const webhook = async (req, res) => {
     });
   }
 
-  // Return a response to acknowledge receipt of the event
+  // Върнете отговор, за да потвърдите получаването на събитието
   res.json({ received: true });
 };
 
