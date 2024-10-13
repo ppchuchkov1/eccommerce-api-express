@@ -34,16 +34,16 @@ const stripePayment = async (req, res) => {
   }
 };
 
-// Stripe webhook endpoint
 const stripeWebhook = (req, res) => {
   const sig = req.headers["stripe-signature"];
 
   try {
     const event = stripe.webhooks.constructEvent(
-      req.body, // използва се raw body
+      req.body,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
+    console.log(req);
 
     // Проверка дали плащането е успешно
     if (event.type === "checkout.session.completed") {
