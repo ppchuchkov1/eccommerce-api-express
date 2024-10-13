@@ -31,12 +31,12 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.use("/api/payment", paymentRoutes);
 app.use(bodyParser.json());
 app.use("/api-docs", swaggerMiddleware, swaggerSetup);
 
 //Routes
 app.use("/api/products", productRoutes);
-app.use("/api/payment", paymentRoutes);
 
 // Start the server
 app.listen(PORT, () => {
