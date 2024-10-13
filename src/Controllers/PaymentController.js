@@ -58,7 +58,7 @@ const stripeWebhook = async (req, res) => {
       console.log(`Payment successful! Session ID: ${session.id}`);
 
       // Send a confirmation email
-      const customerEmail = session.customer_email || "default@example.com"; // Use the email from the session or a default one
+      const customerEmail = session.customerEmail || "default@example.com"; // Use the email from the session or a default one
       const mailOptions = {
         from: "your-email@example.com", // Replace with your email
         to: customerEmail,
