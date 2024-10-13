@@ -34,9 +34,13 @@ app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
 // Премести bodyParser.raw() за webhook маршрута преди да регистрираш рутовете
-app.use("/api/payment/webhook", bodyParser.raw({ type: "application/json" }));
+app.post(
+  "/api/payment/webhook",
+  bodyParser.raw({ type: "application/json" }),
+  (req, res) => paymentRoutes(req, res)
+);
 
-//Routes
+// Регистриране на рутовете
 app.use("/api/products", productRoutes);
 app.use("/api/payment", paymentRoutes);
 
