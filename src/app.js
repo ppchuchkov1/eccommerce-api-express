@@ -6,7 +6,7 @@ const cors = require("cors");
 const { swaggerMiddleware, swaggerSetup } = require("./SwaggerOptions");
 const productRoutes = require("./Routes/ProductsRoutes");
 const paymentRoutes = require("./Routes/PaymentRoutes");
-
+const { stripeWebhook } = require("./Controllers/PaymentController");
 const app = express();
 const PORT = process.env.PORT || 5001;
 
@@ -37,7 +37,7 @@ app.use(bodyParser.json());
 app.post(
   "/api/payment/webhook",
   bodyParser.raw({ type: "application/json" }),
-  (req, res) => paymentRoutes(req, res)
+  stripeWebhook // Тук добавяме stripeWebhook
 );
 
 // Регистриране на рутовете
