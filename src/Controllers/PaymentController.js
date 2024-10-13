@@ -37,56 +37,30 @@ const stripePayment = async (req, res) => {
 const stripeWebhook = (req, res) => {
   const sig = req.headers["stripe-signature"];
 
+  let event;
+
   try {
-    const event = stripe.webhooks.constructEvent(
-      req.body,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
-    console.log(req);
-
-    // Проверка дали плащането е успешно
-    if (event.type === "checkout.session.completed") {
-      const session = event.data.object;
-      console.log(`Payment was successful! Session ID: ${session.id}`);
-
-      // Изпращане на потвърдителен имейл
-      const htmlTemplatePath = path.join(
-        __dirname,
-        "../payment-email-template.html"
-      );
-
-      fs.readFile(htmlTemplatePath, "utf-8", (err, htmlContent) => {
-        if (err) {
-          console.error("Error reading HTML file:", err);
-          return res.status(500).json({ error: "Internal Server Error" });
-        }
-
-        // Подготовка и изпращане на имейл
-        const mailOptions = {
-          from: process.env.GMAIL_USER,
-          to: session.customer_email, // използва се имейл от сесията
-          subject: "Payment Successful",
-          text: `Thank you for your purchase! Your payment was successful. Session ID: ${session.id}`,
-          html: htmlContent,
-        };
-
-        transporter.sendMail(mailOptions, (error, info) => {
-          if (error) {
-            console.error("Error sending email:", error);
-          } else {
-            console.log("Email sent: " + info.response);
-          }
-        });
-      });
-    }
-
-    // Отговор, че събитието е получено успешно
-    res.json({ received: true });
+    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
   } catch (err) {
-    console.error(`Webhook signature verification failed.`, err.message);
+    console.error(`Webhook signature verification failed: ${err.message}`);
     res.status(400).send(`Webhook Error: ${err.message}`);
+    return;
   }
+
+  // Обработка на конкретни събития
+  switch (event.type) {
+    case "checkout.session.completed":
+      const session = event.data.object;
+      console.log(`Payment successful! Session ID: ${session.id}`);
+      // Вашата логика за обработка на успешни плащания
+      break;
+    // Добавете обработка за други типове събития, ако е необходимо
+    default:
+      console.log(`Unhandled event type ${event.type}`);
+  }
+
+  // Върнете 200 отговор, за да потвърдите получаването на събитието
+  res.send();
 };
 
 module.exports = {
