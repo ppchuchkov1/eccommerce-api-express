@@ -27,6 +27,8 @@ const stripePayment = async (req, res) => {
       cancel_url: `https://stipe-react.netlify.app/cancel`,
     });
 
+    // Send email with the customer email and session details
+    req.session.customerEmail = customerEmail; // Store customer email in the session
     res.status(200).json({ id: session.id });
   } catch (error) {
     console.error("Error creating checkout session:", error);
@@ -34,7 +36,7 @@ const stripePayment = async (req, res) => {
   }
 };
 
-const stripeWebhook = (req, res) => {
+const stripeWebhook = async (req, res) => {
   const endpointSecret =
     "whsec_8179dfc3993168f5cafdf007bb98ea34abb33ad235af6fdd249c21e86c656684";
   const sig = req.headers["stripe-signature"];
@@ -49,19 +51,36 @@ const stripeWebhook = (req, res) => {
     return;
   }
 
-  // Обработка на конкретни събития
+  // Handle specific events
   switch (event.type) {
     case "checkout.session.completed":
       const session = event.data.object;
       console.log(`Payment successful! Session ID: ${session.id}`);
-      // Вашата логика за обработка на успешни плащания
+
+      // Send a confirmation email
+      const customerEmail = session.customer_email || "default@example.com"; // Use the email from the session or a default one
+      const mailOptions = {
+        from: "your-email@example.com", // Replace with your email
+        to: customerEmail,
+        subject: "Payment Successful",
+        text: `Thank you for your payment! Your session ID is ${session.id}.`,
+        // You can also add HTML content here if you prefer
+      };
+
+      try {
+        await transporter.sendMail(mailOptions);
+        console.log(`Email sent to ${customerEmail}`);
+      } catch (emailError) {
+        console.error("Error sending email:", emailError);
+      }
       break;
-    // Добавете обработка за други типове събития, ако е необходимо
+
+    // Add handling for other event types as needed
     default:
       console.log(`Unhandled event type ${event.type}`);
   }
 
-  // Върнете 200 отговор, за да потвърдите получаването на събитието
+  // Return a 200 response to acknowledge receipt of the event
   res.send();
 };
 
