@@ -1,21 +1,18 @@
 require("dotenv").config();
 const express = require("express");
-const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const { swaggerMiddleware, swaggerSetup } = require("./SwaggerOptions");
 const productRoutes = require("./Routes/ProductsRoutes");
 const paymentRoutes = require("./Routes/PaymentRoutes");
 const stripeWebHookRoutes = require("./Routes/StripeWebHookRoutes");
+const connectMongoDB = require("./connections/mongo");
 
 const app = express();
 const PORT = process.env.PORT || 5001;
 
 // MongoDB connection
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => console.log("MongoDB connected successfully"))
-  .catch((err) => console.error("MongoDB connection error:", err));
+connectMongoDB();
 
 // Middleware
 const corsOptions = {
