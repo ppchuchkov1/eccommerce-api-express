@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 5001;
 const server = http.createServer(app);
 const io = socketIO(server, {
   cors: {
-    origin: ["http://localhost:3000", "https://stipe-react.netlify.app"],
+    origin: ["http://localhost:3000", "https://eccommerce-react.netlify.app/"],
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -29,7 +29,7 @@ connectMongoDB();
 
 // Middleware
 const corsOptions = {
-  origin: ["http://localhost:3000", "https://stipe-react.netlify.app"],
+  origin: ["http://localhost:3000", "https://eccommerce-react.netlify.app/"],
   methods: ["GET", "POST"],
   credentials: true,
   allowedHeaders: [
